@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Porównywarka Versus</title>
+<meta name="description" content="Porównaj produkty po linkach: parametry, zwycięzcy i werdykt.">
+<meta name="theme-color" content="#2b47d9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Versus">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: jedna kolumna jak aplikacja mobilna; produkty mają własne kolory (A, B, C, D), wiersze specyfikacji jak w GSMArena/versus */
+:root {
+  --bg: #f3f4f7;
+  --surface: #ffffff;
+  --surface-2: #eceef3;
+  --line: #dadde6;
+  --fg: #171a24;
+  --muted: #5d6273;
+  --accent: #2b47d9;
+  --accent-fg: #ffffff;
+  --p0: #e2513a;
+  --p1: #2b6fe0;
+  --p2: #10936b;
+  --p3: #9a4fd1;
+  --p0-soft: #fbe6e2;
+  --p1-soft: #e0eafc;
+  --p2-soft: #dcf2ea;
+  --p3-soft: #f0e4f9;
+  --warn: #9a6a00;
+  --warn-soft: #fff3d1;
+  --bad: #b3261e;
+  --font-display: "Familjen Grotesk", "Figtree", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11131a; --surface: #1a1d27; --surface-2: #232734; --line: #2f3443;
+    --fg: #eceef4; --muted: #9aa0b3; --accent: #7d93ff; --accent-fg: #0d1020;
+    --p0: #ff7a62; --p1: #6ea0ff; --p2: #3fcf9c; --p3: #c18bf2;
+    --p0-soft: #3a211d; --p1-soft: #1c2a45; --p2-soft: #15332a; --p3-soft: #2e2140;
+    --warn: #f0c254; --warn-soft: #3a3016; --bad: #ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11131a; --surface: #1a1d27; --surface-2: #232734; --line: #2f3443;
+  --fg: #eceef4; --muted: #9aa0b3; --accent: #7d93ff; --accent-fg: #0d1020;
+  --p0: #ff7a62; --p1: #6ea0ff; --p2: #3fcf9c; --p3: #c18bf2;
+  --p0-soft: #3a211d; --p1-soft: #1c2a45; --p2-soft: #15332a; --p3-soft: #2e2140;
+  --warn: #f0c254; --warn-soft: #3a3016; --bad: #ff8a80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+/* nagłówek */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 18px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: var(--fg); position: relative; overflow: hidden; flex: none; }
+.logo::before, .logo::after { content: ""; position: absolute; top: 0; bottom: 0; width: 50%; }
+.logo::before { left: 0; background: var(--p0); clip-path: polygon(0 0, 100% 0, 60% 100%, 0 100%); }
+.logo::after { right: 0; background: var(--p1); clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%); }
+.brand h1 { font-size: 22px; letter-spacing: -0.01em; }
+.brand small { display: block; color: var(--muted); font-size: 12.5px; }
+.top-actions { display: flex; gap: 6px; flex: none; }
+.ghost { background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; font-size: 13.5px; color: var(--fg); }
+.ghost:hover { background: var(--surface-2); }
+
+/* pole wklejania */
+.paste {
+  background: var(--surface); border: 1.5px dashed var(--line); border-radius: var(--r);
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.paste.drag { border-color: var(--accent); }
+.paste label { font-weight: 600; font-size: 14px; }
+.paste-row { display: flex; gap: 8px; }
+.paste-row textarea {
+  flex: 1; min-width: 0; resize: none; height: 46px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg); padding: 11px 12px; font-size: 14.5px;
+}
+.hint { color: var(--muted); font-size: 12.5px; margin: 0; }
+.primary {
+  background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 10px;
+  padding: 0 18px; font-weight: 700; min-height: 46px; white-space: nowrap;
+}
+.primary:disabled { opacity: .45; cursor: default; }
+
+/* sloty produktów */
+.slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.slot {
+  background: var(--surface); border-radius: var(--r); border: 1px solid var(--line);
+  padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0;
+  border-top: 4px solid var(--pc);
+}
+.slot-head { display: flex; align-items: center; gap: 8px; }
+.badge {
+  width: 24px; height: 24px; border-radius: 7px; background: var(--pc); color: #fff;
+  display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: none;
+}
+.slot-title { font-weight: 600; font-size: 14.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.slot-x { background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; padding: 2px 6px; }
+.slot input[type="url"] {
+  width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 9px; padding: 9px 10px; font-size: 14px;
+}
+.slot-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.chipbtn {
+  border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; color: var(--fg);
+}
+.chipbtn.on { border-color: var(--pc); background: var(--pcs); }
+.slot textarea {
+  width: 100%; min-height: 84px; border: 1px solid var(--line); background: var(--bg); border-radius: 9px; padding: 8px 10px; font-size: 13px; resize: vertical;
+}
+.status { font-size: 12.5px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.status.err { color: var(--bad); }
+.status.ok { color: var(--fg); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pc); flex: none; }
+.loading .dot { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+.add-slot {
+  border: 1.5px dashed var(--line); background: none; border-radius: var(--r); color: var(--muted); min-height: 60px; font-weight: 600;
+}
+.thumb { width: 100%; max-height: 90px; object-fit: cover; border-radius: 8px; }
+
+.notice { background: var(--warn-soft); color: var(--fg); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; }
+.notice b { color: var(--warn); }
+
+/* wynik */
+.result { display: flex; flex-direction: column; gap: 14px; }
+.example-tag {
+  align-self: flex-start; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--warn); background: var(--warn-soft); padding: 4px 9px; border-radius: 6px;
+}
+.vs-head {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px);
+  padding-block: 8px; display: grid; gap: 8px;
+}
+.vs-cards { display: grid; gap: 8px; }
+.pcard {
+  background: var(--surface); border-radius: 12px; padding: 10px 12px; min-width: 0;
+  border: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; position: relative;
+}
+.pcard .pname { font-family: var(--font-display); font-weight: 700; font-size: 15px; line-height: 1.2; overflow-wrap: anywhere; }
+.pcard .pmeta { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pcard .pmeta a { color: inherit; }
+.pcard .price { font-family: var(--font-num); font-size: 15px; }
+.pcard .price small { font-family: var(--font-body); color: var(--muted); font-size: 11.5px; }
+.score { display: flex; align-items: center; gap: 8px; }
+.score-bar { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.score-bar i { display: block; height: 100%; background: var(--pc); border-radius: 3px; }
+.score b { font-family: var(--font-num); font-size: 13px; min-width: 2.5ch; text-align: right; }
+.crown { position: absolute; top: -8px; right: 10px; background: var(--pc); color: #fff; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; padding: 2px 7px; border-radius: 5px; text-transform: uppercase; }
+
+.verdict { background: var(--surface); border-radius: var(--r); border: 1px solid var(--line); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.verdict h2 { font-size: 18px; }
+.verdict p { margin: 0; max-width: 65ch; }
+.picks { display: grid; gap: 8px; }
+.pick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+.pick .badge { width: 22px; height: 22px; font-size: 12px; margin-top: 1px; }
+
+.proscons { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.pc-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
+.pc-box h3 { font-size: 14.5px; display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.pc-box ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+.pc-box li { margin-block: 2px; }
+.pc-box .plus::marker { content: "+  "; color: var(--p2); font-weight: 700; }
+.pc-box .minus::marker { content: "–  "; color: var(--bad); font-weight: 700; }
+
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.toolbar h2 { font-size: 18px; }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; user-select: none; }
+.switch input { appearance: none; width: 36px; height: 20px; border-radius: 10px; background: var(--line); position: relative; margin: 0; cursor: pointer; }
+.switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); transition: transform .15s; }
+.switch input:checked { background: var(--accent); }
+.switch input:checked::after { transform: translateX(16px); }
+
+.specs { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.group-h { background: var(--surface-2); padding: 7px 14px; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.row { padding: 10px 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.group-h + .row { border-top: 0; }
+.row-label { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.row-vals { display: grid; gap: 8px; }
+.val { font-size: 14px; min-width: 0; overflow-wrap: anywhere; padding: 4px 8px; border-radius: 7px; border: 1px solid transparent; }
+.val.win { background: var(--pcs); border-color: color-mix(in srgb, var(--pc) 40%, transparent); font-weight: 600; }
+.val.win::before { content: "✓ "; color: var(--pc); font-weight: 700; }
+.row-why { font-size: 12px; color: var(--muted); }
+.row.same .val { color: var(--muted); }
+
+.foot { color: var(--muted); font-size: 12.5px; }
+.history { display: flex; flex-direction: column; gap: 6px; }
+.history h2 { font-size: 16px; }
+.hitem { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; }
+.hitem span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hitem span:last-child { color: var(--muted); flex: none; }
+.empty { color: var(--muted); font-size: 13.5px; }
+.progress { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; gap: 12px; align-items: center; }
+.spinner { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--surface-2); border-top-color: var(--accent); animation: spin .8s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.stop { margin-left: auto; }
+@media (prefers-reduced-motion: reduce) { .spinner, .loading .dot { animation: none; } }
+
+/* ustawienia */
+.settings { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.settings h2 { font-size: 16px; }
+.settings p { margin: 0; font-size: 13.5px; max-width: 65ch; }
+.settings .paste-row input { flex: 1; min-width: 0; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); padding: 11px 12px; font-size: 14px; }
+.settings a { color: var(--accent); }
+.settings .ok { color: var(--p2); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div><h1>Versus</h1><small>Porównaj produkty po linkach</small></div>
+    </div>
+    <div class="top-actions">
+      <button class="ghost" id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">Klucz API</button>
+      <button class="ghost" id="resetBtn" type="button">Nowe</button>
+    </div>
+  </header>
+
+  <section class="settings" id="settings" hidden>
+    <h2>Połączenie z Claude</h2>
+    <p>Aplikacja korzysta z Claude przez API Anthropic. Wklej swój klucz API (zaczyna się od <code>sk-ant-</code>). Klucz zostaje tylko w tej przeglądarce i jest wysyłany wyłącznie do api.anthropic.com. Klucz założysz na <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noopener">platform.claude.com</a>.</p>
+    <div class="paste-row">
+      <input type="password" id="apiKey" autocomplete="off" placeholder="sk-ant-…">
+      <button class="primary" id="saveKey" type="button">Zapisz</button>
+    </div>
+    <p id="keyStatus" class="hint"></p>
+  </section>
+
+  <section class="paste" id="pasteZone">
+    <label for="pasteBox">Wklej linki do produktów</label>
+    <div class="paste-row">
+      <textarea id="pasteBox" placeholder="https://…" rows="1"></textarea>
+      <button class="primary" id="compareBtn" type="button">Porównaj</button>
+    </div>
+    <p class="hint">Linki trafiają do kolejnych wolnych miejsc. Możesz też po prostu wkleić (Ctrl+V) w dowolnym miejscu strony albo przeciągnąć link. Gdy oba miejsca są pełne, porównanie startuje samo.</p>
+  </section>
+
+  <div class="notice" id="noSample" hidden><b>Brak połączenia z Claude.</b> Dodaj klucz API (przycisk „Klucz API” na górze), żeby porównywać własne linki. Poniżej widać przykładowe porównanie.</div>
+
+  <section class="slots" id="slots" aria-label="Produkty"></section>
+
+  <section class="result" id="result"></section>
+
+  <section class="history" id="history"></section>
+
+  <p class="foot" id="foot">Claude otwiera stronę produktu i czyta z niej cenę i parametry. Część sklepów blokuje automatyczne pobieranie. Wtedy dane pochodzą z wiedzy Claude'a, a cena jest oznaczona jako szacunek. Dokładną cenę dostaniesz, gdy dołączysz zrzut ekranu strony albo wkleisz jej tekst.</p>
+</div>
+
+<script>
+const MAX = 4;
+const LETTERS = ["A", "B", "C", "D"];
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+
+const EXAMPLE = {
+  example: true,
+  products: [
+    { url: "https://sklep.example/apple-iphone-16-128gb-czarny", name: "Apple iPhone 16 128 GB", brand: "Apple", category: "Smartfon", store: "sklep.example", price: 4199, currency: "zł", priceSource: "szacunek",
+      pros: ["Bardzo wydajny układ A18", "Długie wsparcie aktualizacjami", "Świetne nagrywanie wideo"], cons: ["Ekran tylko 60 Hz", "Brak teleobiektywu", "USB-C w standardzie USB 2.0"] },
+    { url: "https://sklep.example/samsung-galaxy-s25-12-128gb-granatowy", name: "Samsung Galaxy S25 12/128 GB", brand: "Samsung", category: "Smartfon", store: "sklep.example", price: 3699, currency: "zł", priceSource: "szacunek",
+      pros: ["Płynny ekran 120 Hz", "Teleobiektyw 3x", "12 GB RAM", "Lżejszy"], cons: ["Ładowanie tylko 25 W", "Mała bateria jak na Androida"] }
+  ],
+  compare: {
+    scores: [78, 84],
+    verdict: "Galaxy S25 daje więcej sprzętu za mniej pieniędzy: płynniejszy ekran, teleobiektyw i więcej pamięci RAM. iPhone 16 wygrywa nagrywaniem wideo i ekosystemem Apple.",
+    picks: [
+      { index: 1, reason: "Dla osób, które chcą najwięcej za swoje pieniądze i robią zdjęcia z przybliżeniem." },
+      { index: 0, reason: "Dla tych, którzy mają już Maca lub iPada i często nagrywają filmy." }
+    ],
+    rows: [
+      { group: "Cena", label: "Cena (szacunek)", values: ["ok. 4 199 zł", "ok. 3 699 zł"], winner: 1, why: "500 zł taniej" },
+      { group: "Ekran", label: "Przekątna", values: ['6,1"', '6,2"'], winner: null },
+      { group: "Ekran", label: "Rozdzielczość", values: ["2556 × 1179", "2340 × 1080"], winner: 0 },
+      { group: "Ekran", label: "Odświeżanie", values: ["60 Hz", "120 Hz"], winner: 1, why: "Wyraźnie płynniejsze przewijanie" },
+      { group: "Wydajność", label: "Procesor", values: ["Apple A18", "Snapdragon 8 Elite for Galaxy"], winner: null, why: "Oba z najwyższej półki" },
+      { group: "Wydajność", label: "RAM", values: ["8 GB", "12 GB"], winner: 1 },
+      { group: "Wydajność", label: "Pamięć", values: ["128 GB", "128 GB"], winner: null },
+      { group: "Aparaty", label: "Główny", values: ["48 Mpix", "50 Mpix"], winner: null },
+      { group: "Aparaty", label: "Szerokokątny", values: ["12 Mpix", "12 Mpix"], winner: null },
+      { group: "Aparaty", label: "Teleobiektyw", values: ["brak", "10 Mpix, zoom 3x"], winner: 1 },
+      { group: "Aparaty", label: "Przedni", values: ["12 Mpix", "12 Mpix"], winner: null },
+      { group: "Bateria", label: "Pojemność", values: ["3561 mAh", "4000 mAh"], winner: 1 },
+      { group: "Bateria", label: "Ładowanie przewodowe", values: ["ok. 25 W", "25 W"], winner: null },
+      { group: "Pozostałe", label: "Waga", values: ["170 g", "162 g"], winner: 1 },
+      { group: "Pozostałe", label: "Odporność", values: ["IP68", "IP68"], winner: null },
+      { group: "Pozostałe", label: "System", values: ["iOS 18", "Android 15 (One UI 7)"], winner: null },
+      { group: "Pozostałe", label: "Aktualizacje", values: ["ok. 6–7 lat", "7 lat"], winner: null }
+    ]
+  }
+};
+
+const state = {
+  slots: [newSlot(), newSlot()],
+  view: EXAMPLE,           // co pokazuje sekcja wyniku
+  phase: "idle",           // idle | analyzing | comparing
+  error: "",
+  onlyDiff: store.get("vs.onlyDiff", false),
+  history: store.get("vs.history", [])
+};
+let booted = false;  // dopiero po odtworzeniu zapisanych linków wolno je nadpisać
+let sample = null;   // Claude w podglądzie artefaktu (claude.ai), jeśli jest
+let ctl = null;
+
+/* ---------- połączenie z Claude: artefakt albo API Anthropic ---------- */
+const API_URL = "https://api.anthropic.com/v1/messages";
+const MODEL = "claude-opus-5-5";
+const ai = {
+  key: store.get("vs.apiKey", ""),
+  get web() { return !sample && !!this.key; },
+  ready() { return !!sample || !!this.key; },
+  async json(prompt, opts = {}) {
+    if (sample) return sample.json(prompt, { signal: opts.signal, images: opts.images });
+    const content = [];
+    for (const img of opts.images || []) content.push(await imageBlock(img));
+    content.push({ type: "text", text: prompt + "\n\nOdpowiedz samym JSON-em, bez innego tekstu." });
+    const body = {
+      model: MODEL,
+      max_tokens: 16000,
+      fallbacks: "default",
+      messages: [{ role: "user", content }]
+    };
+    if (!opts.noWeb) body.tools = [{ type: "web_fetch_20260209", name: "web_fetch", max_uses: 3, max_content_tokens: 20000 }];
+    let res;
+    // pause_turn: serwer przerwał pętlę narzędzi, wysyłamy odpowiedź z powrotem, żeby dokończył
+    for (let i = 0; i < 4; i++) {
+      res = await callApi(body, opts.signal);
+      if (res.stop_reason !== "pause_turn") break;
+      body.messages = [body.messages[0], { role: "assistant", content: res.content }];
+    }
+    if (res.stop_reason === "refusal") throw { code: "refused" };
+    const text = res.content.filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+    const v = parseJson(text);
+    if (v === undefined) throw { code: "invalid_json", text };
+    return v;
+  }
+};
+async function callApi(body, signal) {
+  let r;
+  try {
+    r = await fetch(API_URL, {
+      method: "POST", signal,
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": ai.key,
+        "anthropic-version": "2026-10-21",
+        "anthropic-beta": "server-side-fallback-2026-07-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify(body)
+    });
+  } catch (e) {
+    throw { code: signal?.aborted ? "cancelled" : "network" };
+  }
+  if (r.ok) return r.json();
+  const map = { 401: "bad_key", 403: "bad_key", 429: "rate_limited", 529: "upstream_error" };
+  let code = map[r.status] || "upstream_error";
+  try { const j = await r.json(); if (/credit|billing/i.test(j?.error?.message || "")) code = "no_credit"; } catch {}
+  throw { code };
+}
+function parseJson(t) {
+  const tries = [t, (t.match(/```(?:json)?\s*([\s\S]*?)```/) || [])[1]];
+  const a = t.search(/[{[]/), b = Math.max(t.lastIndexOf("}"), t.lastIndexOf("]"));
+  if (a >= 0 && b > a) tries.push(t.slice(a, b + 1));
+  for (const x of tries) { if (!x) continue; try { return JSON.parse(x); } catch {} }
+  return undefined;
+}
+// zrzut ekranu zmniejszamy do 1600 px, żeby zmieścił się w limicie API
+async function imageBlock(file) {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  const data = c.toDataURL("image/jpeg", 0.85).split(",")[1];
+  return { type: "image", source: { type: "base64", media_type: "image/jpeg", data } };
+}
+
+function newSlot(url = "") { return { url, text: "", showText: false, image: null, imageUrl: "", status: "idle", data: null, err: "" }; }
+function host(u) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } }
+function isUrl(s) { try { const u = new URL(s); return /^https?:$/.test(u.protocol); } catch { return false; } }
+function findUrls(text) { return (String(text).match(/https?:\/\/[^\s<>"']+/g) || []).map(u => u.replace(/[).,;]+$/, "")); }
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function money(p, cur) {
+  if (p == null || isNaN(p)) return "brak ceny";
+  return Number(p).toLocaleString("pl-PL", { maximumFractionDigits: 2 }) + " " + (cur || "zł");
+}
+function pc(i) { return `--pc: var(--p${i}); --pcs: var(--p${i}-soft);`; }
+
+/* ---------- dodawanie linków ---------- */
+function addUrls(urls) {
+  let added = 0;
+  for (const u of urls) {
+    if (state.slots.some(s => s.url === u)) continue;
+    let slot = state.slots.find(s => !s.url);
+    if (!slot && state.slots.length < MAX) { slot = newSlot(); state.slots.push(slot); }
+    if (!slot) break;
+    Object.assign(slot, newSlot(u));
+    added++;
+  }
+  renderSlots();
+  if (added && readyCount() >= 2 && state.slots.every(s => s.url) && state.phase === "idle") run();
+  return added;
+}
+function readyCount() { return state.slots.filter(s => isUrl(s.url)).length; }
+
+const pasteBox = document.getElementById("pasteBox");
+pasteBox.addEventListener("paste", e => {
+  const t = e.clipboardData?.getData("text") || "";
+  const urls = findUrls(t);
+  if (urls.length) { e.preventDefault(); addUrls(urls); pasteBox.value = ""; }
+});
+pasteBox.addEventListener("input", () => {
+  const urls = findUrls(pasteBox.value);
+  if (urls.length && /\s$|^https?:\/\/\S+$/.test(pasteBox.value)) { addUrls(urls); pasteBox.value = ""; }
+});
+pasteBox.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); const u = findUrls(pasteBox.value); if (u.length) { addUrls(u); pasteBox.value = ""; } else run(); } });
+
+document.addEventListener("paste", e => {
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+  const file = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith("image/"));
+  const urls = findUrls(e.clipboardData?.getData("text") || "");
+  if (urls.length) { e.preventDefault(); addUrls(urls); }
+  else if (file) {
+    const slot = state.slots.find(s => !s.image) ; if (slot) { setImage(slot, file); e.preventDefault(); }
+  }
+});
+const zone = document.getElementById("pasteZone");
+document.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("drag"); });
+document.addEventListener("dragleave", e => { if (!e.relatedTarget) zone.classList.remove("drag"); });
+document.addEventListener("drop", e => {
+  e.preventDefault(); zone.classList.remove("drag");
+  const urls = findUrls(e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text") || "");
+  if (urls.length) addUrls(urls);
+});
+
+/* ---------- sloty ---------- */
+const slotsEl = document.getElementById("slots");
+function renderSlots() {
+  slotsEl.innerHTML = state.slots.map((s, i) => {
+    const title = s.data?.name || (s.url ? host(s.url) : `Produkt ${LETTERS[i]}`);
+    let status = "";
+    if (s.status === "loading") status = `<div class="status loading"><span class="dot"></span>Rozpoznaję produkt…</div>`;
+    else if (s.status === "done") status = `<div class="status ok"><span class="dot"></span>${esc(s.data.category || "Rozpoznano")} · pewność: ${esc(s.data.confidence || "?")}</div>`;
+    else if (s.status === "error") status = `<div class="status err">${esc(s.err)}</div>`;
+    return `<div class="slot" style="${pc(i)}" data-i="${i}">
+      <div class="slot-head"><span class="badge">${LETTERS[i]}</span><span class="slot-title">${esc(title)}</span>
+        ${state.slots.length > 2 ? `<button class="slot-x" type="button" data-act="remove" aria-label="Usuń produkt ${LETTERS[i]}">×</button>` : ""}</div>
+      <input type="url" id="url${i}" inputmode="url" placeholder="Link do produktu ${LETTERS[i]}" value="${esc(s.url)}" data-act="url">
+      <div class="slot-tools">
+        <button type="button" class="chipbtn ${s.showText ? "on" : ""}" data-act="text">Tekst strony${s.text ? " ✓" : ""}</button>
+        <button type="button" class="chipbtn ${s.image ? "on" : ""}" data-act="img">${s.image ? "Zrzut ✓" : "Zrzut ekranu"}</button>
+        ${s.image ? `<button type="button" class="chipbtn" data-act="noimg">Usuń zrzut</button>` : ""}
+        <input type="file" id="file${i}" accept="image/*" hidden data-act="file">
+      </div>
+      ${s.imageUrl ? `<img class="thumb" src="${s.imageUrl}" alt="Zrzut ekranu produktu ${LETTERS[i]}">` : ""}
+      ${s.showText ? `<textarea id="txt${i}" data-act="txt" placeholder="Opcjonalnie: zaznacz wszystko na stronie produktu, skopiuj i wklej tutaj. Wtedy cena i parametry będą dokładne.">${esc(s.text)}</textarea>` : ""}
+      ${status}
+    </div>`;
+  }).join("") + (state.slots.length < MAX ? `<button class="add-slot" type="button" id="addSlot">+ Dodaj produkt</button>` : "");
+  document.getElementById("compareBtn").disabled = state.phase !== "idle" || readyCount() < 2;
+  // linki zostają po zamknięciu aplikacji, więc drugi link można „udostępnić” osobno
+  const done = state.slots.every(s => s.data) && !state.view?.example;
+  if (booted) store.set("vs.pending", { urls: state.slots.map(s => s.url), done });
+}
+slotsEl.addEventListener("click", e => {
+  if (e.target.id === "addSlot") { state.slots.push(newSlot()); renderSlots(); document.getElementById("url" + (state.slots.length - 1))?.focus(); return; }
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  const i = +el.closest(".slot").dataset.i, s = state.slots[i];
+  const act = el.dataset.act;
+  if (act === "remove") { state.slots.splice(i, 1); renderSlots(); }
+  if (act === "text") { s.showText = !s.showText; renderSlots(); if (s.showText) document.getElementById("txt" + i)?.focus(); }
+  if (act === "img") document.getElementById("file" + i).click();
+  if (act === "noimg") { s.image = null; s.imageUrl = ""; s.data = null; s.status = "idle"; renderSlots(); }
+});
+slotsEl.addEventListener("change", e => {
+  const el = e.target; const i = +el.closest(".slot")?.dataset.i; const s = state.slots[i];
+  if (!s) return;
+  if (el.dataset.act === "url") { const u = findUrls(el.value)[0] || el.value.trim(); if (u !== s.url) { Object.assign(s, newSlot(u), { text: s.text, showText: s.showText }); } renderSlots(); }
+  if (el.dataset.act === "txt") { if (s.text !== el.value) { s.text = el.value; s.data = null; s.status = "idle"; } renderSlots(); }
+  if (el.dataset.act === "file" && el.files[0]) setImage(s, el.files[0]);
+});
+slotsEl.addEventListener("paste", e => {
+  const el = e.target; if (el.dataset?.act !== "url") return;
+  const urls = findUrls(e.clipboardData?.getData("text") || ""); if (!urls.length) return;
+  e.preventDefault();
+  const i = +el.closest(".slot").dataset.i;
+  Object.assign(state.slots[i], newSlot(urls[0]));
+  if (urls.length > 1) addUrls(urls.slice(1)); else renderSlots();
+  if (state.slots.every(s => isUrl(s.url)) && state.phase === "idle") run();
+});
+function setImage(s, file) {
+  if (s.imageUrl) URL.revokeObjectURL(s.imageUrl);
+  s.image = file; s.imageUrl = URL.createObjectURL(file); s.data = null; s.status = "idle";
+  renderSlots();
+}
+
+/* ---------- Claude ---------- */
+function extractPrompt(s) {
+  return `Jesteś silnikiem porównywarki produktów (w stylu Ceneo, versus.com, GSMArena). Rozpoznaj produkt z linku do sklepu.
+${ai.web ? `Najpierw otwórz link narzędziem web_fetch i weź z niego nazwę, cenę i parametry ("priceSource":"strona"). Jeśli strona się nie otworzy lub nie ma na niej danych, wnioskuj z adresu URL i swojej wiedzy ("priceSource":"szacunek").` : `Nie masz dostępu do internetu. Wnioskuj z adresu URL (nazwa i parametry w ścieżce, domena sklepu) i ze swojej wiedzy o produkcie.`}
+${s.text ? "Użytkownik wkleił tekst ze strony produktu. To główne źródło: weź z niego cenę, wariant i parametry." : ""}
+${s.image ? "Załączony obraz to zrzut ekranu strony produktu. To główne źródło: weź z niego nazwę, cenę i parametry." : ""}
+Jeśli nie da się ustalić produktu, ustaw "name" na null.
+
+Link: ${s.url}
+${s.text ? "\nTekst strony (fragment):\n" + s.text.slice(0, 12000) : ""}
+
+Odpowiedz wyłącznie JSON-em po polsku, w tym kształcie:
+{"name":"pełna nazwa z wariantem","brand":"","category":"np. Smartfon","store":"nazwa sklepu","price":1234.99,"currency":"zł","priceSource":"strona|szacunek","confidence":"wysoka|średnia|niska","specs":[{"group":"Ekran","label":"Przekątna","value":"6,1\\""}],"pros":["…"],"cons":["…"]}
+Podaj 10–25 najważniejszych parametrów dla tej kategorii. "price" to liczba lub null; "priceSource":"szacunek", jeśli cena nie pochodzi z tekstu lub zrzutu.`;
+}
+function comparePrompt(products) {
+  return `Porównaj produkty jak dobra porównywarka (versus.com, GSMArena, RTINGS). Dane produktów (JSON):
+${JSON.stringify(products.map((p, i) => ({ idx: i, name: p.name, category: p.category, price: p.price, currency: p.currency, priceSource: p.priceSource, specs: p.specs })))}
+
+Zasady:
+- Zbuduj wspólną listę parametrów: te same nazwy wierszy dla wszystkich produktów, wartości w tej samej jednostce i formacie. Brakującą wartość wpisz jako "brak danych".
+- Pierwszy wiersz to cena (grupa "Cena"). Szacunkowe ceny oznacz "ok.".
+- "winner" to indeks produktu (0..${products.length - 1}) z wyraźnie lepszą wartością albo null, gdy remis lub nie da się ocenić.
+- "why" tylko gdy coś wymaga krótkiego wyjaśnienia (do 8 słów), inaczej pomiń.
+- "scores": ocena 0–100 dla każdego produktu, uwzględnij stosunek jakości do ceny.
+- "verdict": 2–3 zdania prostym językiem, bez marketingu.
+- "picks": dla kogo który produkt, po jednym na produkt.
+Odpowiedz wyłącznie JSON-em po polsku:
+{"rows":[{"group":"","label":"","values":["…"],"winner":0,"why":""}],"scores":[0],"verdict":"","picks":[{"index":0,"reason":""}]}`;
+}
+
+function errText(e) {
+  const c = e?.code;
+  if (c === "bad_key") return "Klucz API jest nieprawidłowy. Sprawdź go w ustawieniach.";
+  if (c === "no_credit") return "Na koncie API brakuje środków. Doładuj je na platform.claude.com.";
+  if (c === "network") return "Brak połączenia z internetem.";
+  if (c === "not_granted" || c === "sampling_disabled" || c === "not_declared" || c === "capability_disabled") return "Strona nie ma zgody na korzystanie z Claude.";
+  if (c === "rate_limited") return "Za dużo zapytań. Spróbuj za chwilę.";
+  if (c === "session_expired") return "Zaloguj się ponownie do Claude.";
+  if (c === "invalid_json" || c === "empty_completion") return "Nie udało się odczytać odpowiedzi. Spróbuj jeszcze raz.";
+  if (c === "image_rejected") return "Ten obraz nie przeszedł. Wybierz inny plik (JPG, PNG lub WebP).";
+  if (c === "refused") return "Claude odmówił analizy tego linku.";
+  return "Coś poszło nie tak. Spróbuj jeszcze raz.";
+}
+
+async function analyze(s, signal) {
+  s.status = "loading"; s.err = ""; renderSlots();
+  try {
+    const opts = { signal };
+    if (s.image) opts.images = [s.image];
+    const d = await ai.json(extractPrompt(s), opts);
+    if (!d || !d.name) throw { code: "_unknown" };
+    d.specs = Array.isArray(d.specs) ? d.specs : [];
+    d.url = s.url;
+    s.data = d; s.status = "done";
+  } catch (e) {
+    s.status = "error";
+    s.err = e?.code === "_unknown" ? "Nie rozpoznano produktu. Wklej tekst strony albo dodaj zrzut ekranu." : e?.code === "cancelled" ? "Przerwano." : errText(e);
+  }
+  renderSlots();
+}
+
+async function run() {
+  if (state.phase !== "idle") return;
+  const active = state.slots.filter(s => isUrl(s.url) || s.image);
+  if (active.length < 2) { state.error = "Dodaj co najmniej dwa linki."; renderResult(); return; }
+  if (!ai.ready()) { state.error = "Dodaj klucz API, żeby porównywać własne linki."; renderResult(); openSettings(); return; }
+  ctl = new AbortController();
+  state.error = ""; state.phase = "analyzing"; renderAll();
+  // dwa produkty naraz, reszta czeka
+  const todo = active.filter(s => !s.data);
+  for (let k = 0; k < todo.length; k += 2) {
+    await Promise.all(todo.slice(k, k + 2).map(s => analyze(s, ctl.signal)));
+    if (ctl.signal.aborted) break;
+  }
+  const ok = active.filter(s => s.data);
+  if (ctl.signal.aborted || ok.length < 2) {
+    state.phase = "idle";
+    if (!ctl.signal.aborted) state.error = "Potrzebne są co najmniej dwa rozpoznane produkty.";
+    renderAll(); return;
+  }
+  state.phase = "comparing"; renderResult();
+  try {
+    const c = await ai.json(comparePrompt(ok.map(s => s.data)), { signal: ctl.signal, noWeb: true });
+    if (!c || !Array.isArray(c.rows)) throw { code: "invalid_json" };
+    state.view = { example: false, products: ok.map(s => s.data), compare: c };
+    saveHistory(state.view);
+  } catch (e) {
+    if (e?.code !== "cancelled") state.error = errText(e);
+  }
+  state.phase = "idle"; renderAll();
+}
+
+function saveHistory(v) {
+  const entry = { ts: Date.now(), products: v.products, compare: v.compare };
+  state.history = [entry, ...state.history.filter(h => h.products.map(p => p.url).join() !== v.products.map(p => p.url).join())].slice(0, 12);
+  store.set("vs.history", state.history);
+}
+
+/* ---------- wynik ---------- */
+const resultEl = document.getElementById("result");
+function renderResult() {
+  let html = "";
+  if (state.error) html += `<div class="notice"><b>${esc(state.error)}</b></div>`;
+  if (state.phase !== "idle") {
+    const msg = state.phase === "analyzing" ? "Rozpoznaję produkty z linków…" : "Zestawiam parametry i wybieram zwycięzców…";
+    html += `<div class="progress"><span class="spinner" aria-hidden="true"></span><span>${msg}</span><button class="ghost stop" type="button" id="stopBtn">Przerwij</button></div>`;
+  }
+  const v = state.view;
+  if (v && state.phase === "idle") html += renderComparison(v);
+  resultEl.innerHTML = html;
+}
+
+function renderComparison(v) {
+  const P = v.products, C = v.compare, n = P.length;
+  const scores = (C.scores || []).map(x => Math.max(0, Math.min(100, Math.round(+x || 0))));
+  const best = scores.length ? scores.indexOf(Math.max(...scores)) : -1;
+  const cols = `grid-template-columns: repeat(${n}, minmax(0, 1fr));`;
+  const wins = P.map((_, i) => (C.rows || []).filter(r => r.winner === i).length);
+
+  let h = v.example ? `<span class="example-tag">Przykład · dane poglądowe</span>` : "";
+  h += `<div class="vs-head"><div class="vs-cards" style="${cols}">` + P.map((p, i) => `
+    <div class="pcard" style="${pc(i)}">
+      ${i === best && n > 1 ? `<span class="crown">Lepszy wybór</span>` : ""}
+      <div class="slot-head"><span class="badge">${LETTERS[i]}</span></div>
+      <div class="pname">${esc(p.name)}</div>
+      <div class="pmeta">${p.url && !v.example ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.store || host(p.url))}</a>` : esc(p.store || host(p.url))}</div>
+      <div class="price">${esc(money(p.price, p.currency))} ${p.priceSource === "szacunek" ? "<small>szacunek</small>" : ""}</div>
+      ${scores[i] != null ? `<div class="score"><span class="score-bar"><i style="width:${scores[i]}%"></i></span><b>${scores[i]}</b></div>` : ""}
+      <div class="pmeta">wygrywa w ${wins[i]} ${plural(wins[i])}</div>
+    </div>`).join("") + `</div></div>`;
+
+  if (C.verdict) {
+    h += `<div class="verdict"><h2>Werdykt</h2><p>${esc(C.verdict)}</p>`;
+    if (Array.isArray(C.picks) && C.picks.length) h += `<div class="picks">` + C.picks.filter(k => P[k.index]).map(k => `<div class="pick" style="${pc(k.index)}"><span class="badge">${LETTERS[k.index]}</span><span>${esc(k.reason)}</span></div>`).join("") + `</div>`;
+    h += `</div>`;
+  }
+
+  if (P.some(p => (p.pros || []).length || (p.cons || []).length)) {
+    h += `<div class="proscons">` + P.map((p, i) => `<div class="pc-box" style="${pc(i)}"><h3><span class="badge">${LETTERS[i]}</span>${esc(shortName(p.name))}</h3><ul>
+      ${(p.pros || []).map(x => `<li class="plus">${esc(x)}</li>`).join("")}${(p.cons || []).map(x => `<li class="minus">${esc(x)}</li>`).join("")}</ul></div>`).join("") + `</div>`;
+  }
+
+  h += `<div class="toolbar"><h2>Parametry</h2><label class="switch"><input type="checkbox" id="onlyDiff" ${state.onlyDiff ? "checked" : ""}>Tylko różnice</label></div>`;
+  h += `<div class="specs">`;
+  let group = null, shown = 0;
+  for (const r of C.rows || []) {
+    const vals = (r.values || []).slice(0, n);
+    const same = r.winner == null && new Set(vals.map(x => String(x).toLowerCase().replace(/\s/g, ""))).size <= 1;
+    if (state.onlyDiff && same) continue;
+    if (r.group !== group) { group = r.group; h += `<div class="group-h">${esc(group || "Inne")}</div>`; }
+    shown++;
+    h += `<div class="row ${same ? "same" : ""}"><div class="row-label">${esc(r.label)}</div>
+      <div class="row-vals" style="${cols}">${vals.map((x, i) => `<div class="val ${r.winner === i ? "win" : ""}" style="${pc(i)}">${esc(x)}</div>`).join("")}</div>
+      ${r.why ? `<div class="row-why">${esc(r.why)}</div>` : ""}</div>`;
+  }
+  if (!shown) h += `<div class="row"><span class="empty">Brak różnic w parametrach.</span></div>`;
+  h += `</div>`;
+  return h;
+}
+function plural(k) { return k === 1 ? "kategorii" : "kategoriach"; }
+function shortName(s) { return String(s || "").split(" ").slice(0, 4).join(" "); }
+
+resultEl.addEventListener("click", e => { if (e.target.id === "stopBtn") ctl?.abort(); });
+resultEl.addEventListener("change", e => {
+  if (e.target.id === "onlyDiff") { state.onlyDiff = e.target.checked; store.set("vs.onlyDiff", state.onlyDiff); renderResult(); }
+});
+
+/* ---------- historia ---------- */
+const histEl = document.getElementById("history");
+function renderHistory() {
+  if (!state.history.length) { histEl.innerHTML = ""; return; }
+  histEl.innerHTML = `<h2>Ostatnie porównania</h2>` + state.history.map((h, k) =>
+    `<button class="hitem" type="button" data-k="${k}"><span>${h.products.map(p => esc(shortName(p.name))).join(" vs ")}</span><span>${new Date(h.ts).toLocaleDateString("pl-PL")}</span></button>`).join("");
+}
+histEl.addEventListener("click", e => {
+  const b = e.target.closest(".hitem"); if (!b) return;
+  const h = state.history[+b.dataset.k];
+  state.view = { example: false, products: h.products, compare: h.compare };
+  state.slots = h.products.map(p => Object.assign(newSlot(p.url), { data: p, status: "done" }));
+  state.error = ""; renderAll(); resultEl.scrollIntoView({ behavior: "smooth" });
+});
+
+document.getElementById("compareBtn").addEventListener("click", () => {
+  const u = findUrls(pasteBox.value); if (u.length) { addUrls(u); pasteBox.value = ""; } else run();
+});
+document.getElementById("resetBtn").addEventListener("click", () => {
+  ctl?.abort();
+  state.slots = [newSlot(), newSlot()]; state.error = ""; state.phase = "idle"; state.view = EXAMPLE;
+  renderAll(); pasteBox.focus();
+});
+
+function renderAll() { renderSlots(); renderResult(); renderHistory(); }
+renderAll();
+
+/* ---------- ustawienia klucza ---------- */
+const settingsEl = document.getElementById("settings");
+const keyInput = document.getElementById("apiKey");
+const keyStatus = document.getElementById("keyStatus");
+function updateConn() {
+  document.getElementById("noSample").hidden = ai.ready();
+  keyStatus.innerHTML = ai.key ? `<span class="ok">Klucz zapisany.</span> Możesz porównywać produkty.` : "Brak klucza.";
+}
+function openSettings() {
+  settingsEl.hidden = false;
+  document.getElementById("settingsBtn").setAttribute("aria-expanded", "true");
+  keyInput.focus();
+}
+document.getElementById("settingsBtn").addEventListener("click", () => {
+  if (settingsEl.hidden) openSettings();
+  else { settingsEl.hidden = true; document.getElementById("settingsBtn").setAttribute("aria-expanded", "false"); }
+});
+document.getElementById("saveKey").addEventListener("click", () => {
+  const k = keyInput.value.trim();
+  if (k) { ai.key = k; store.set("vs.apiKey", k); keyInput.value = ""; }
+  updateConn();
+});
+updateConn();
+
+/* ---------- „Udostępnij” z telefonu (Web Share Target) i linki ?url= ---------- */
+(() => {
+  const pending = store.get("vs.pending", null);
+  if (pending && !pending.done && Array.isArray(pending.urls) && pending.urls.some(Boolean)) {
+    state.slots = pending.urls.slice(0, MAX).map(u => newSlot(String(u || "")));
+    while (state.slots.length < 2) state.slots.push(newSlot());
+  }
+  booted = true;
+  renderSlots();
+  const q = new URLSearchParams(location.search);
+  const shared = findUrls([q.get("url"), q.get("text"), q.get("title")].filter(Boolean).join(" "));
+  if (shared.length) {
+    history.replaceState(null, "", location.pathname);
+    addUrls(shared);
+  }
+})();
+
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+(async () => {
+  try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
+  updateConn();
+  renderSlots();
+})();
+</script>
+</body>
+</html>
