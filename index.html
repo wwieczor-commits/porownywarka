@@ -141,6 +141,14 @@ button { cursor: pointer; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pc); flex: none; }
 .loading .dot { animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .25; } }
+.cta-bar {
+  position: sticky; bottom: 0; z-index: 4;
+  padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+  display: flex; flex-direction: column; gap: 6px; align-items: stretch;
+}
+.cta-bar .primary { min-height: 52px; font-size: 16.5px; border-radius: 12px; }
+.cta-hint { text-align: center; color: var(--muted); font-size: 12.5px; }
 .add-slot {
   border: 1.5px dashed var(--line); background: none; border-radius: var(--r); color: var(--muted); min-height: 60px; font-weight: 600;
 }
@@ -269,6 +277,11 @@ button { cursor: pointer; }
   <div class="notice" id="noSample" hidden><b>Brak połączenia z Claude.</b> Dodaj klucz API (przycisk „Klucz API” na górze), żeby porównywać własne linki. Poniżej widać przykładowe porównanie.</div>
 
   <section class="slots" id="slots" aria-label="Produkty"></section>
+
+  <div class="cta-bar">
+    <button class="primary" id="compareBtn2" type="button">Porównaj</button>
+    <span class="cta-hint" id="ctaHint"></span>
+  </div>
 
   <section class="result" id="result"></section>
 
@@ -434,7 +447,16 @@ function addUrls(urls) {
   if (added && readyCount() >= 2 && state.slots.every(s => s.url) && state.phase === "idle") run();
   return added;
 }
-function readyCount() { return state.slots.filter(s => isUrl(s.url)).length; }
+function readyCount() { return state.slots.filter(s => isUrl(s.url) || s.image).length; }
+// oba przyciski „Porównaj” i podpowiedź, czego jeszcze brakuje
+function updateCta() {
+  const n = readyCount(), busy = state.phase !== "idle";
+  const btn = document.getElementById("compareBtn2"), hint = document.getElementById("ctaHint");
+  document.getElementById("compareBtn").disabled = busy;
+  btn.disabled = busy || n < 2;
+  btn.textContent = busy ? "Porównuję…" : n > 2 ? `Porównaj ${n} produkty` : "Porównaj";
+  hint.textContent = busy ? "" : n === 0 ? "Wklej linki do dwóch produktów" : n === 1 ? "Dodaj jeszcze jeden link" : "";
+}
 
 const pasteBox = document.getElementById("pasteBox");
 pasteBox.addEventListener("paste", e => {
@@ -491,7 +513,7 @@ function renderSlots() {
       ${status}
     </div>`;
   }).join("") + (state.slots.length < MAX ? `<button class="add-slot" type="button" id="addSlot">+ Dodaj produkt</button>` : "");
-  document.getElementById("compareBtn").disabled = state.phase !== "idle" || readyCount() < 2;
+  updateCta();
   // linki zostają po zamknięciu aplikacji, więc drugi link można „udostępnić” osobno
   const done = state.slots.every(s => s.data) && !state.view?.example;
   if (booted) store.set("vs.pending", { urls: state.slots.map(s => s.url), done });
@@ -506,10 +528,22 @@ slotsEl.addEventListener("click", e => {
   if (act === "img") document.getElementById("file" + i).click();
   if (act === "noimg") { s.image = null; s.imageUrl = ""; s.data = null; s.status = "idle"; renderSlots(); }
 });
+slotsEl.addEventListener("input", e => {
+  const el = e.target; if (el.dataset?.act !== "url") return;
+  const s = state.slots[+el.closest(".slot").dataset.i];
+  const u = findUrls(el.value)[0] || el.value.trim();
+  if (u !== s.url) { s.url = u; s.data = null; s.status = "idle"; updateCta(); }
+});
 slotsEl.addEventListener("change", e => {
   const el = e.target; const i = +el.closest(".slot")?.dataset.i; const s = state.slots[i];
   if (!s) return;
-  if (el.dataset.act === "url") { const u = findUrls(el.value)[0] || el.value.trim(); if (u !== s.url) { Object.assign(s, newSlot(u), { text: s.text, showText: s.showText }); } renderSlots(); }
+  // bez przerysowania: inaczej pole, które właśnie dotknięto, traci kursor (na telefonie znika klawiatura)
+  if (el.dataset.act === "url") {
+    const u = findUrls(el.value)[0] || el.value.trim();
+    s.url = u; if (el.value !== u) el.value = u;
+    el.closest(".slot").querySelector(".slot-title").textContent = s.data?.name || host(u) || `Produkt ${LETTERS[i]}`;
+    updateCta();
+  }
   if (el.dataset.act === "txt") { if (s.text !== el.value) { s.text = el.value; s.data = null; s.status = "idle"; } renderSlots(); }
   if (el.dataset.act === "file" && el.files[0]) setImage(s, el.files[0]);
 });
@@ -711,6 +745,7 @@ histEl.addEventListener("click", e => {
   state.error = ""; renderAll(); resultEl.scrollIntoView({ behavior: "smooth" });
 });
 
+document.getElementById("compareBtn2").addEventListener("click", () => run());
 document.getElementById("compareBtn").addEventListener("click", () => {
   const u = findUrls(pasteBox.value); if (u.length) { addUrls(u); pasteBox.value = ""; } else run();
 });

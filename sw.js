@@ -1,5 +1,5 @@
 // Prosty service worker: aplikacja otwiera się też bez internetu (porównywanie i tak wymaga sieci).
-const CACHE = "versus-v1";
+const CACHE = "versus-v2";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", e => {
