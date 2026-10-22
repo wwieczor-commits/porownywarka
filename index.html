@@ -11,6 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
+<script src="config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -348,12 +349,14 @@ let sample = null;   // Claude w podglądzie artefaktu (claude.ai), jeśli jest
 let ctl = null;
 
 /* ---------- połączenie z Claude: artefakt albo API Anthropic ---------- */
-const API_URL = "https://api.anthropic.com/v1/messages";
+// Gdy w config.js jest adres pośrednika, aplikacja działa u każdego bez klucza API.
+const PROXY_URL = String(window.VERSUS_CONFIG?.proxyUrl || "").trim();
+const API_URL = PROXY_URL || "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-opus-5-5";
 const ai = {
   key: store.get("vs.apiKey", ""),
-  get web() { return !sample && !!this.key; },
-  ready() { return !!sample || !!this.key; },
+  get web() { return !sample && (!!PROXY_URL || !!this.key); },
+  ready() { return !!sample || !!PROXY_URL || !!this.key; },
   async json(prompt, opts = {}) {
     if (sample) return sample.json(prompt, { signal: opts.signal, images: opts.images });
     const content = [];
@@ -385,7 +388,8 @@ async function callApi(body, signal) {
   try {
     r = await fetch(API_URL, {
       method: "POST", signal,
-      headers: {
+      // przez pośrednika idzie samo zapytanie, klucz dokłada serwer
+      headers: PROXY_URL ? { "content-type": "application/json" } : {
         "content-type": "application/json",
         "x-api-key": ai.key,
         "anthropic-version": "2026-10-21",
@@ -398,7 +402,7 @@ async function callApi(body, signal) {
     throw { code: signal?.aborted ? "cancelled" : "network" };
   }
   if (r.ok) return r.json();
-  const map = { 401: "bad_key", 403: "bad_key", 429: "rate_limited", 529: "upstream_error" };
+  const map = PROXY_URL ? { 429: "rate_limited", 413: "too_big" } : { 401: "bad_key", 403: "bad_key", 429: "rate_limited", 529: "upstream_error" };
   let code = map[r.status] || "upstream_error";
   try { const j = await r.json(); if (/credit|billing/i.test(j?.error?.message || "")) code = "no_credit"; } catch {}
   throw { code };
@@ -598,6 +602,7 @@ function errText(e) {
   if (c === "bad_key") return "Klucz API jest nieprawidłowy. Sprawdź go w ustawieniach.";
   if (c === "no_credit") return "Na koncie API brakuje środków. Doładuj je na platform.claude.com.";
   if (c === "network") return "Brak połączenia z internetem.";
+  if (c === "too_big") return "Za duże zapytanie. Skróć wklejony tekst albo użyj mniejszego zrzutu.";
   if (c === "not_granted" || c === "sampling_disabled" || c === "not_declared" || c === "capability_disabled") return "Strona nie ma zgody na korzystanie z Claude.";
   if (c === "rate_limited") return "Za dużo zapytań. Spróbuj za chwilę.";
   if (c === "session_expired") return "Zaloguj się ponownie do Claude.";
@@ -764,6 +769,7 @@ const keyInput = document.getElementById("apiKey");
 const keyStatus = document.getElementById("keyStatus");
 function updateConn() {
   document.getElementById("noSample").hidden = ai.ready();
+  document.getElementById("settingsBtn").hidden = !!PROXY_URL;
   keyStatus.innerHTML = ai.key ? `<span class="ok">Klucz zapisany.</span> Możesz porównywać produkty.` : "Brak klucza.";
 }
 function openSettings() {

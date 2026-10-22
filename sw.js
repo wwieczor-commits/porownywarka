@@ -1,6 +1,6 @@
 // Prosty service worker: aplikacja otwiera się też bez internetu (porównywanie i tak wymaga sieci).
-const CACHE = "versus-v2";
-const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
+const CACHE = "versus-v3";
+const SHELL = ["./", "index.html", "config.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
